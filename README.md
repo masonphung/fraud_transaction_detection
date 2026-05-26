@@ -1,4 +1,4 @@
-# Real-Time Fraud Detection System
+# Intercontinental Bank Real-Time Fraud Detection System
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![Apache Kafka](https://img.shields.io/badge/Apache_Kafka-Confluent_Cloud-231F20?logo=apachekafka&logoColor=white)
@@ -40,12 +40,12 @@ Credit card fraud represents a compounding loss: each fraudulent transaction tri
 
 ### Model Performance
 
-| Metric | Value |
-|---|---|
-| Precision | **97.87%** |
-| Recall | **41.07%** |
-| F1 Score | ~0.58 |
-| Class Imbalance Handling | SMOTE (post-split) |
+| Metric                   | Value                      |
+| ------------------------ | -------------------------- |
+| Precision                | **97.87%**           |
+| Recall                   | **41.07%**           |
+| F1 Score                 | ~0.58                      |
+| Class Imbalance Handling | SMOTE (post-split)         |
 | Hyperparameter Objective | F2 Score (recall-weighted) |
 
 > **Why F2?** In fraud detection the cost of a missed fraud (false negative) materially exceeds the cost of a false alert (false positive). The hyperparameter search optimises F2 (β=2), which weights recall twice as heavily as precision.
@@ -54,14 +54,14 @@ Credit card fraud represents a compounding loss: each fraudulent transaction tri
 
 ### Business Impact at Intercontinental Bank Scale
 
-| Metric | Value |
-|---|---|
-| Monthly transactions processed | 65.88 million |
-| Monthly fraud attempts (0.357% rate) | ~235,191 |
-| Monthly fraud instances blocked (41.07% recall) | **~96,593** |
-| Savings per blocked instance ($123 txn + $15 chargeback) | $138 |
-| **Estimated monthly cost savings** | **$13.33 Million** |
-| False positive rate | < 2.13% |
+| Metric                                                   | Value                    |
+| -------------------------------------------------------- | ------------------------ |
+| Monthly transactions processed                           | 65.88 million            |
+| Monthly fraud attempts (0.357% rate)                     | ~235,191                 |
+| Monthly fraud instances blocked (41.07% recall)          | **~96,593**        |
+| Savings per blocked instance ($123 txn + $15 chargeback) | $138                     |
+| **Estimated monthly cost savings**                 | **$13.33 Million** |
+| False positive rate                                      | < 2.13%                  |
 
 ---
 
@@ -73,31 +73,31 @@ Credit card fraud represents a compounding loss: each fraudulent transaction tri
 
 The system is built around **Kafka as the sole integration layer**: both the training and inference services consume from the same `transactions` topic independently, fully decoupling their lifecycles.
 
-| Stage | Component | Role |
-|---|---|---|
-| Data Production | `producer/` | Simulates synthetic transaction stream → Kafka |
-| Event Streaming | Apache Kafka (Confluent Cloud) | Durable, replayable message bus |
-| Real-time Inference | Spark Structured Streaming | Sub-200ms ML inference via Pandas UDF |
-| Model Training | Airflow DAG (daily, 03:00 UTC) | SMOTE + XGBoost + hyperparameter tuning |
-| Experiment Tracking | MLflow + MinIO | Model versioning, artifact storage |
-| Predictions Store | PostgreSQL 16 | Persists fraud predictions for dashboarding |
-| Monitoring | Streamlit Dashboard | Real-time KPIs, pattern analytics, model health |
+| Stage               | Component                      | Role                                            |
+| ------------------- | ------------------------------ | ----------------------------------------------- |
+| Data Production     | `producer/`                  | Simulates synthetic transaction stream → Kafka |
+| Event Streaming     | Apache Kafka (Confluent Cloud) | Durable, replayable message bus                 |
+| Real-time Inference | Spark Structured Streaming     | Sub-200ms ML inference via Pandas UDF           |
+| Model Training      | Airflow DAG (daily, 03:00 UTC) | SMOTE + XGBoost + hyperparameter tuning         |
+| Experiment Tracking | MLflow + MinIO                 | Model versioning, artifact storage              |
+| Predictions Store   | PostgreSQL 16                  | Persists fraud predictions for dashboarding     |
+| Monitoring          | Streamlit Dashboard            | Real-time KPIs, pattern analytics, model health |
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Event Streaming | Apache Kafka (Confluent Cloud, SASL_SSL) |
-| Stream Processing | Apache Spark 3.5.4 (Structured Streaming + Pandas UDF) |
-| ML Framework | XGBoost + scikit-learn + imbalanced-learn (SMOTE) |
-| Training Orchestration | Apache Airflow 3.0.2 (CeleryExecutor) |
-| Experiment Tracking | MLflow + MinIO (S3-compatible artifact store) |
-| Task Broker | Redis |
-| Metadata Store | PostgreSQL 16 |
-| Dashboard | Streamlit + Plotly |
-| Containerisation | Docker / Docker Compose (14 services) |
+| Layer                  | Technology                                             |
+| ---------------------- | ------------------------------------------------------ |
+| Event Streaming        | Apache Kafka (Confluent Cloud, SASL_SSL)               |
+| Stream Processing      | Apache Spark 3.5.4 (Structured Streaming + Pandas UDF) |
+| ML Framework           | XGBoost + scikit-learn + imbalanced-learn (SMOTE)      |
+| Training Orchestration | Apache Airflow 3.0.2 (CeleryExecutor)                  |
+| Experiment Tracking    | MLflow + MinIO (S3-compatible artifact store)          |
+| Task Broker            | Redis                                                  |
+| Metadata Store         | PostgreSQL 16                                          |
+| Dashboard              | Streamlit + Plotly                                     |
+| Containerisation       | Docker / Docker Compose (14 services)                  |
 
 ---
 
@@ -105,21 +105,23 @@ The system is built around **Kafka as the sole integration layer**: both the tra
 
 The synthetic producer simulates four realistic fraud archetypes, each with distinct transaction signatures that the system detects via rule-based classification at query time:
 
-| Pattern | Signal | Producer Weight |
-|---|---|---|
-| **Card Testing** | Micro-transactions (< $2) probing card validity | Low |
-| **Merchant Collusion** | High-value transactions (> $3,000) at high-risk merchants | Medium |
-| **Geographic Anomaly** | Transactions from high-risk countries (RU, CN, NG, GB) | Medium |
-| **Account Takeover** | Elevated spend (> $500) inconsistent with user history | High |
+| Pattern                      | Signal                                                    | Producer Weight |
+| ---------------------------- | --------------------------------------------------------- | --------------- |
+| **Card Testing**       | Micro-transactions (< $2) probing card validity           | Low             |
+| **Merchant Collusion** | High-value transactions (> $3,000) at high-risk merchants | Medium          |
+| **Geographic Anomaly** | Transactions from high-risk countries (RU, CN, NG, GB)    | Medium          |
+| **Account Takeover**   | Elevated spend (> $500) inconsistent with user history    | High            |
 
 ---
 
 ## Pipeline Overview
 
 ### 1 · Data Production (`src/producer/`)
+
 Continuously publishes synthetic credit card transactions to the Kafka topic `transactions`. Simulates realistic fraud patterns with configurable weights and injects engineered signals (transaction velocity, time-since-last-transaction, high-risk merchant flags).
 
 ### 2 · Daily Model Training (`src/dags/`)
+
 Triggered at **03:00 UTC** by an Airflow DAG with three sequential tasks:
 
 ```
@@ -131,7 +133,9 @@ validate_environment >> execute_training >> cleanup
 - **cleanup** — removes temporary `.pkl` artefacts to keep container storage lean
 
 ### 3 · Real-time Inference (`src/inference/`)
+
 A persistent Spark Structured Streaming job that:
+
 1. Reads from the `transactions` Kafka topic continuously
 2. Engineers features (transaction velocity, time delta, amount ratios) in-stream
 3. Applies a **broadcasted XGBoost model** via a struct-returning `pandas_udf` to output both `fraud_probability` and `prediction` in a single pass
@@ -140,14 +144,15 @@ A persistent Spark Structured Streaming job that:
 > **Broadcast pattern:** The model is deserialised once per Spark executor (not per task), minimising overhead at throughput scale.
 
 ### 4 · Streamlit Dashboard (`src/dashboard/`)
+
 Four-page monitoring interface running on port **8501**:
 
-| Page | Content |
-|---|---|
-| Overview | Live KPIs, hourly transaction volume, system health indicators |
-| Live Feed | Paginated fraud predictions table with pattern colour-coding |
-| Pattern Analytics | Donut breakdown, time series trends, top merchants, country distribution |
-| Model Health | MLflow model version, metric trends across training runs, confusion matrix + PR curve |
+| Page              | Content                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| Overview          | Live KPIs, hourly transaction volume, system health indicators                        |
+| Live Feed         | Paginated fraud predictions table with pattern colour-coding                          |
+| Pattern Analytics | Donut breakdown, time series trends, top merchants, country distribution              |
+| Model Health      | MLflow model version, metric trends across training runs, confusion matrix + PR curve |
 
 ---
 
@@ -186,6 +191,7 @@ fraud_transaction_detection/
 ## Quickstart
 
 ### Prerequisites
+
 - Docker Desktop installed and running
 - Confluent Cloud account with a `transactions` Kafka topic and an API key/secret
 
@@ -203,18 +209,18 @@ cp src/env/.env.example src/.env
 docker compose --profile flower -f src/docker-compose.yml up -d --build
 ```
 
-> **Note:** `--profile flower` starts the Celery Flower monitoring UI on port 5555.  
+> **Note:** `--profile flower` starts the Celery Flower monitoring UI on port 5555.
 > On a fresh volume, `init-multiple-dbs.sh` automatically provisions the `airflow`, `mlflow`, and `fraud_detection` databases.
 
 ### 3 · Access services
 
-| Service | URL |
-|---|---|
+| Service             | URL                   |
+| ------------------- | --------------------- |
 | Streamlit Dashboard | http://localhost:8501 |
-| Airflow UI | http://localhost:8080 |
-| MLflow UI | http://localhost:5500 |
-| MinIO Console | http://localhost:9001 |
-| Flower (Celery) | http://localhost:5555 |
+| Airflow UI          | http://localhost:8080 |
+| MLflow UI           | http://localhost:5500 |
+| MinIO Console       | http://localhost:9001 |
+| Flower (Celery)     | http://localhost:5555 |
 
 ### 4 · Trigger the training pipeline
 
@@ -231,16 +237,16 @@ docker compose -f src/docker-compose.yml down -v     # stop and remove volumes (
 
 ## Key Design Decisions
 
-| Decision | Rationale |
-|---|---|
-| **F2 Score for tuning** | Missed fraud costs more than false alerts — β=2 weights recall appropriately |
-| **SMOTE after split** | Oversampling inside the pipeline post-split prevents data leakage and ensures evaluation metrics reflect true class distribution |
-| **Broadcasted model in UDF** | Deserialises once per executor (not per row), the correct pattern for high-throughput Spark UDF inference |
-| **Threshold decoupled from model** | Decision threshold derived post-hoc from the PR curve; re-optimisable without retraining |
-| **Kafka as integration layer** | Training and inference consume the same topic independently — lifecycle fully decoupled, no restart required on model update |
-| **Struct-returning Pandas UDF** | Outputs `fraud_probability` + `prediction` in a single model pass, avoiding double inference |
-| **foreachBatch dual-sink** | Cleanest pattern for writing one stream to multiple destinations (Kafka output + PostgreSQL) |
-| **PostgreSQL as dashboard store** | Query-friendly, indexed on `detected_at`, `user_id`, `location`, `merchant` for efficient dashboard aggregations |
+| Decision                                 | Rationale                                                                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **F2 Score for tuning**            | Missed fraud costs more than false alerts — β=2 weights recall appropriately                                                   |
+| **SMOTE after split**              | Oversampling inside the pipeline post-split prevents data leakage and ensures evaluation metrics reflect true class distribution |
+| **Broadcasted model in UDF**       | Deserialises once per executor (not per row), the correct pattern for high-throughput Spark UDF inference                        |
+| **Threshold decoupled from model** | Decision threshold derived post-hoc from the PR curve; re-optimisable without retraining                                         |
+| **Kafka as integration layer**     | Training and inference consume the same topic independently — lifecycle fully decoupled, no restart required on model update    |
+| **Struct-returning Pandas UDF**    | Outputs `fraud_probability` + `prediction` in a single model pass, avoiding double inference                                 |
+| **foreachBatch dual-sink**         | Cleanest pattern for writing one stream to multiple destinations (Kafka output + PostgreSQL)                                     |
+| **PostgreSQL as dashboard store**  | Query-friendly, indexed on `detected_at`, `user_id`, `location`, `merchant` for efficient dashboard aggregations         |
 
 ---
 
