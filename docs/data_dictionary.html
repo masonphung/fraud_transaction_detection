@@ -1,0 +1,247 @@
+
+<h2 class="sr-only">Fraud Detection Data Dictionary — raw transaction schema and feature-enriched schema</h2>
+
+<style>
+  .dd-section { margin: 0 0 2.5rem; }
+  .dd-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 1rem; padding-bottom: 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .dd-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin: 0; }
+  .dd-badge { font-size: 11px; padding: 3px 8px; border-radius: var(--border-radius-md); font-weight: 500; }
+  .badge-raw { background: var(--color-background-info); color: var(--color-text-info); }
+  .badge-enriched { background: var(--color-background-success); color: var(--color-text-success); }
+  .badge-source { font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  thead th { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 10px; text-align: left; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  tbody tr { border-bottom: 0.5px solid var(--color-border-tertiary); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--color-background-secondary); }
+  td { padding: 9px 10px; vertical-align: top; color: var(--color-text-primary); }
+
+  .col-field { width: 22%; }
+  .col-type { width: 13%; }
+  .col-range { width: 20%; }
+  .col-desc { width: 45%; }
+
+  .col-field2 { width: 24%; }
+  .col-type2 { width: 12%; }
+  .col-group2 { width: 14%; }
+  .col-range2 { width: 18%; }
+  .col-desc2 { width: 32%; }
+
+  .field-name { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-primary); }
+  .type-pill { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: var(--border-radius-md); font-family: var(--font-mono); }
+  .type-str  { background: #E6F1FB; color: #185FA5; }
+  .type-flt  { background: #EEEDFE; color: #534AB7; }
+  .type-int  { background: #EAF3DE; color: #3B6D11; }
+  .type-bin  { background: #FAECE7; color: #993C1D; }
+  .type-dt   { background: #FAEEDA; color: #854F0B; }
+  .type-bool { background: #FBEAF0; color: #993556; }
+
+  .group-pill { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: var(--border-radius-md); }
+  .g-raw       { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .g-temporal  { background: #FAEEDA; color: #854F0B; }
+  .g-behaviour { background: #EEEDFE; color: #534AB7; }
+  .g-monetary  { background: #EAF3DE; color: #3B6D11; }
+  .g-merchant  { background: #FAECE7; color: #993C1D; }
+  .g-label     { background: var(--color-background-info); color: var(--color-text-info); }
+
+  .range-val { font-size: 12px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  .desc-text { color: var(--color-text-secondary); line-height: 1.5; }
+  .note { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+  .fraud-label { color: var(--color-text-danger); font-weight: 500; }
+  .derived-note { font-size: 11px; color: var(--color-text-tertiary); font-style: italic; }
+</style>
+
+<div class="dd-section">
+  <div class="dd-header">
+    <p class="dd-title">Table 1 — Raw transaction schema</p>
+    <span class="dd-badge badge-raw">producer</span>
+    <span class="badge-source">src/producer/main.py</span>
+  </div>
+  <table>
+    <colgroup>
+      <col class="col-field">
+      <col class="col-type">
+      <col class="col-range">
+      <col class="col-desc">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>field</th>
+        <th>type</th>
+        <th>range / format</th>
+        <th>description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="field-name">transaction_id</span></td>
+        <td><span class="type-pill type-str">string</span></td>
+        <td><span class="range-val">UUID v4</span></td>
+        <td><span class="desc-text">Unique identifier for each transaction. Generated via <code>fake.uuid4()</code>. Used as the Kafka message key.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">user_id</span></td>
+        <td><span class="type-pill type-int">integer</span></td>
+        <td><span class="range-val">1000 – 9999</span></td>
+        <td><span class="desc-text">Simulated cardholder identifier. 50 values are pre-selected as compromised users to seed account-takeover fraud patterns.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">amount</span></td>
+        <td><span class="type-pill type-flt">float</span></td>
+        <td><span class="range-val">0.01 – 10,000.00</span></td>
+        <td><span class="desc-text">Transaction value in AUD, rounded to 2 decimal places. Fraud patterns skew the distribution: account-takeover transactions are inflated to $500–$5,000; card-testing transactions are capped at $2.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">currency</span></td>
+        <td><span class="type-pill type-str">string</span></td>
+        <td><span class="range-val">ISO 4217 (3-char)</span></td>
+        <td><span class="desc-text">Transaction currency code. Fixed to <code>AUD</code> for all generated records in the current implementation.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">merchant</span></td>
+        <td><span class="type-pill type-str">string</span></td>
+        <td><span class="range-val">free text</span></td>
+        <td><span class="desc-text">Merchant name. Normally drawn from <code>fake.company()</code>. Fraud patterns replace this with a high-risk merchant name (<code>QuickCash</code>, <code>GlobalDigital</code>, <code>FastMoneyX</code>) for account-takeover cases.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">timestamp</span></td>
+        <td><span class="type-pill type-dt">datetime</span></td>
+        <td><span class="range-val">ISO 8601 UTC ±5 min</span></td>
+        <td><span class="desc-text">Event time of the transaction. Jittered by ±300 seconds from <code>datetime.now(UTC)</code> to simulate natural clock drift between systems.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">location</span></td>
+        <td><span class="type-pill type-str">string</span></td>
+        <td><span class="range-val">ISO 3166-1 alpha-2</span></td>
+        <td><span class="desc-text">2-letter country code of the transaction. Geo-anomaly fraud cases override this with a high-risk country: <code>RU</code>, <code>CN</code>, <code>NG</code>, or <code>GB</code>. Card-testing cases are pinned to <code>US</code>.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name fraud-label">is_fraud</span></td>
+        <td><span class="type-pill type-bin">binary</span></td>
+        <td><span class="range-val">0 or 1</span></td>
+        <td><span class="desc-text">Ground-truth fraud label. <code>1</code> = fraudulent, <code>0</code> = legitimate. Simulated prevalence is 1–2%, consistent with industry-observed rates. Applied via four weighted fraud patterns plus a 0.2% baseline random fraud rate.</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="dd-section">
+  <div class="dd-header">
+    <p class="dd-title">Table 2 — Feature-enriched training schema</p>
+    <span class="dd-badge badge-enriched">training DAG</span>
+    <span class="badge-source">src/dags/fraud_detection_training.py · create_features()</span>
+  </div>
+  <table>
+    <colgroup>
+      <col class="col-field2">
+      <col class="col-type2">
+      <col class="col-group2">
+      <col class="col-range2">
+      <col class="col-desc2">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>field</th>
+        <th>type</th>
+        <th>group</th>
+        <th>range / formula</th>
+        <th>description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="field-name">amount</span></td>
+        <td><span class="type-pill type-flt">float</span></td>
+        <td><span class="group-pill g-raw">raw</span></td>
+        <td><span class="range-val">0.01 – 10,000</span></td>
+        <td><span class="desc-text">Carried forward unchanged from the raw schema. Primary monetary signal for the model.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">transaction_hour</span></td>
+        <td><span class="type-pill type-int">integer</span></td>
+        <td><span class="group-pill g-temporal">temporal</span></td>
+        <td><span class="range-val">0 – 23</span></td>
+        <td><span class="desc-text">Hour of day extracted from <code>timestamp</code> (UTC). Used as a cyclical proxy for time-of-day risk.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">day_of_week</span></td>
+        <td><span class="type-pill type-int">integer</span></td>
+        <td><span class="group-pill g-temporal">temporal</span></td>
+        <td><span class="range-val">0 (Mon) – 6 (Sun)</span></td>
+        <td><span class="desc-text">ISO day-of-week from <code>timestamp.dt.dayofweek</code>. Also used to derive <code>is_weekend</code>.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">transaction_day</span></td>
+        <td><span class="type-pill type-int">integer</span></td>
+        <td><span class="group-pill g-temporal">temporal</span></td>
+        <td><span class="range-val">1 – 31</span></td>
+        <td><span class="desc-text">Calendar day of month from <code>timestamp.dt.day</code>. Captures end-of-month spending spikes common in billing fraud.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">transaction_month</span></td>
+        <td><span class="type-pill type-int">integer</span></td>
+        <td><span class="group-pill g-temporal">temporal</span></td>
+        <td><span class="range-val">1 – 12</span></td>
+        <td><span class="desc-text">Month of year from <code>timestamp.dt.month</code>. Captures seasonal fraud seasonality (e.g. holiday periods).</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">is_night</span></td>
+        <td><span class="type-pill type-bin">binary</span></td>
+        <td><span class="group-pill g-temporal">temporal</span></td>
+        <td><span class="range-val">hour ≥ 22 or < 5 → 1</span></td>
+        <td><span class="desc-text">Flags transactions occurring between 10 PM and 5 AM UTC. Night-time activity is a significant fraud risk signal.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">is_weekend</span></td>
+        <td><span class="type-pill type-bin">binary</span></td>
+        <td><span class="group-pill g-temporal">temporal</span></td>
+        <td><span class="range-val">day_of_week ∈ {5,6} → 1</span></td>
+        <td><span class="desc-text">Flags Saturday and Sunday transactions. Reduced monitoring hours on weekends can elevate fraud risk.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">transaction_count_last_24h</span></td>
+        <td><span class="type-pill type-flt">float</span></td>
+        <td><span class="group-pill g-behaviour">behavioural</span></td>
+        <td><span class="range-val">rolling count ≥ 0</span></td>
+        <td><span class="desc-text">Number of prior transactions by the same <code>user_id</code> within the preceding 24-hour window (closed='left', excludes current row). Detects velocity spikes typical of card-testing attacks.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">time_since_last_transaction</span></td>
+        <td><span class="type-pill type-flt">float</span></td>
+        <td><span class="group-pill g-behaviour">behavioural</span></td>
+        <td><span class="range-val">seconds ≥ 0 (0 = first txn)</span></td>
+        <td><span class="desc-text">Seconds elapsed since the user's previous transaction, computed via <code>groupby(user_id).diff()</code>. Very short intervals are a card-testing indicator; 0 for the user's first transaction.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">transaction_count_last_7d</span></td>
+        <td><span class="type-pill type-flt">float</span></td>
+        <td><span class="group-pill g-behaviour">behavioural</span></td>
+        <td><span class="range-val">rolling count ≥ 0</span></td>
+        <td><span class="desc-text">Number of prior transactions by the same <code>user_id</code> in the preceding 7-day window. Provides a medium-term velocity baseline to complement the 24-hour count.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">amount_to_avg_ratio</span></td>
+        <td><span class="type-pill type-flt">float</span></td>
+        <td><span class="group-pill g-monetary">monetary</span></td>
+        <td><span class="range-val">≥ 0 (default 1.0)</span></td>
+        <td><span class="desc-text">Current transaction amount divided by the user's rolling 14-day mean amount (<code>min_periods=1</code>). Values significantly above 1 flag abnormally large transactions relative to the user's own history. Defaults to 1.0 when no prior transactions exist.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name">is_high_risk_merchant</span></td>
+        <td><span class="type-pill type-bin">binary</span></td>
+        <td><span class="group-pill g-merchant">merchant</span></td>
+        <td><span class="range-val">merchant ∈ config list → 1</span></td>
+        <td><span class="desc-text">Flags transactions at merchants listed in <code>config.yaml → high_risk_merchants</code>. Defaults to <code>['QuickCash', 'GlobalDigital', 'FastMoneyX']</code>. OrdinalEncoder is applied in the preprocessing step of the ImbPipeline.</span></td>
+      </tr>
+      <tr>
+        <td><span class="field-name fraud-label">is_fraud</span></td>
+        <td><span class="type-pill type-bin">binary</span></td>
+        <td><span class="group-pill g-label">label</span></td>
+        <td><span class="range-val">0 or 1</span></td>
+        <td><span class="desc-text">Target variable. Retained from the raw schema; separated as <code>y</code> before training. SMOTE oversampling is applied inside the pipeline on the training split only to preserve true class distribution in the test set.</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="derived-note" style="margin-top: 10px; padding-left: 4px;">All 12 features above (excluding <code>is_fraud</code>) are passed to the XGBoost classifier. Raw fields not listed here (<code>transaction_id</code>, <code>user_id</code>, <code>timestamp</code>, <code>currency</code>, <code>merchant</code>, <code>location</code>) are dropped before model input.</p>
+</div>

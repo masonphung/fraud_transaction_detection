@@ -1,0 +1,10 @@
+mlflow
+pyspark
+python-dotenv
+xgboost
+grpcio>=1.48.1
+googleapis-common-protos>=1.56.2
+imblearn
+scikit-learn==1.6.1
+dill
+psycopg2-binary>=2.9.9
