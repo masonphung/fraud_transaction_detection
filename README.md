@@ -10,7 +10,9 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?logo=streamlit&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 
-An end-to-end, production-grade real-time fraud detection system built on an event-driven architecture. The system continuously ingests financial transactions via Apache Kafka, applies ML inference in real time using Spark Structured Streaming, and runs a nightly Airflow retraining pipeline to keep the model current — all orchestrated across 14 containerized services.
+An end-to-end, production-grade real-time fraud detection system built on an event-driven architecture. The system continuously ingests financial transactions via Apache Kafka, applies ML inference in real time using Spark Structured Streaming and runs a nightly Airflow retraining pipeline to keep the model current, all orchestrated across 14 containerized services.
+
+The project is inspired by the design of CodeWithYu's fraud detection system. I build this system myself with the support of Claude Code.
 
 ---
 
@@ -18,7 +20,7 @@ An end-to-end, production-grade real-time fraud detection system built on an eve
 
 **Intercontinental Bank** is a simulated major Australian bank holding approximately 20% of the domestic credit card market — comparable to ANZ or Westpac. Based on published RBA and ASIC industry data, the bank manages roughly **2.44 million credit card accounts** and processes approximately **65.88 million transactions per month** at an average value of $123.
 
-Credit card fraud represents a compounding loss: each fraudulent transaction triggers not only the transaction loss itself but also network chargeback and dispute-processing fees (~$15/incident). At the industry baseline fraud rate of **0.357%**, the bank faces approximately **235,000 fraud attempts per month** — making early, accurate, automated detection a direct revenue protection priority.
+Credit card fraud represents a compounding loss: each fraudulent transaction triggers not only the transaction loss itself but also network chargeback and dispute-processing fees (~$15/incident). At the industry baseline fraud rate of **0.357%**, the bank faces approximately **235,000 fraud attempts per month**, making early, accurate, automated detection a direct revenue protection priority.
 
 ---
 
@@ -28,7 +30,7 @@ Credit card fraud represents a compounding loss: each fraudulent transaction tri
 
 **Questions this system is built to answer:**
 
-1. Can fraudulent transactions be detected within milliseconds of being initiated — before the payment clears?
+1. Can fraudulent transactions be detected within milliseconds of being initiated, before the payment clears?
 2. Which fraud patterns (account takeover, card testing, merchant collusion, geographic anomaly) are most prevalent and how do they trend over time?
 3. Can precision be held high enough (>95%) to avoid material disruption to legitimate customer spend?
 4. Does a daily automated retraining cycle keep the model performant as fraud patterns shift?
@@ -69,7 +71,7 @@ Credit card fraud represents a compounding loss: each fraudulent transaction tri
 
 ![System Architecture](docs/architecture.png)
 
-*I know this look like AI-generated but I made the diagram manually*
+*I know this look like AI-generated but I made the diagram manually with Excalidraw*
 
 The system is built around **Kafka as the sole integration layer**: both the training and inference services consume from the same `transactions` topic independently, fully decoupling their lifecycles.
 
@@ -205,8 +207,11 @@ cp src/env/.env.example src/.env
 ### 2 · Start the full stack
 
 ```bash
+# Go to source cd
+cd src
+
 # First run — builds all images and provisions databases
-docker compose --profile flower -f src/docker-compose.yml up -d --build
+docker compose --profile flower up -d --build
 ```
 
 > **Note:** `--profile flower` starts the Celery Flower monitoring UI on port 5555.
@@ -229,13 +234,13 @@ In the Airflow UI, enable and manually trigger the `fraud_detection_training` DA
 ### 5 · Stop the stack
 
 ```bash
-docker compose -f src/docker-compose.yml down        # stop, keep volumes
-docker compose -f src/docker-compose.yml down -v     # stop and remove volumes (full reset)
+docker compose --profile flower down        # stop, keep volumes
+docker compose -v down       # remove volumes (full reset)
 ```
 
 ---
 
-## Key Design Decisions
+## Some Key Design Decisions
 
 | Decision                                 | Rationale                                                                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -250,8 +255,9 @@ docker compose -f src/docker-compose.yml down -v     # stop and remove volumes (
 
 ---
 
-## References
 
+## References
+- [Code with Yu](https://www.youtube.com/watch?v=ve5xTvsvots)
 - [RBA Payments Data — Credit Card Statistics](https://www.rba.gov.au/payments-and-infrastructure/payments-data.html)
 - [ASIC — Credit Card Lending in Australia](https://asic.gov.au)
 - [XGBoost Documentation](https://xgboost.readthedocs.io)
